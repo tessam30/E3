@@ -114,3 +114,5 @@ pp <- g + coord_flip()+labs(x ="", title = "Award Types", y = "Award type count"
 	plot.title = element_text(lineheight=.8, colour = dblueL))
 	print(pp)
   ggsave(pp, filename = paste("award.type", ".png"), width=7.5, height=5.5)
+
+df.tmp <- df[c(1, 16:24)]
