@@ -109,6 +109,7 @@ names(df.tmp) <- c("Country", "Cooperative Agreement", "Direct Contract", "Fixed
 df.melt <- melt(df.tmp, id.var = "Country", na.rm = TRUE)
 #df.melt$Country <- as.factor(df.melt$Country)
 
+# Create a total count of values by country
 df.sub <- df.melt %>% group_by(Country) %>% mutate(sum = sum(value))
 
 g <- ggplot(df.sub, aes(x = reorder(factor(Country), sum),
@@ -132,6 +133,7 @@ names(df.all) <- c("Country", "Region", "Cooperative Agreement", "Direct Contrac
 
 df.melt <- melt(df.all, id.var = c("Country", "Region"), na.rm = TRUE)
 
+# Create a total count of grants by country and region.
 df.sub <- df.melt %>% group_by(Country, Region) %>% mutate(sum = sum(value))
 
 g <- ggplot(df.sub, aes(x = reorder(factor(Country), sum),
