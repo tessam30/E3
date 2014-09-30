@@ -14,14 +14,17 @@ lblueL 	<- c("#7090B7")
 dblueL 	<- c("#003359")
 lgrayL	<- c("#CECFCB")
 
+# Set dots per inch for all graphic output
+dpi.out = 500
+
 # Set working directory & load data
 # setwd("U:/E3/Infra/")
-setwd("C:/Users/t/Documents/GitHub/E3/Datain")
+# setwd("C:/Users/t/Documents/GitHub/E3/Datain")
+setwd("P:/GeoCenter/GIS/Projects/E3/InfrastructureReport/R")
 
 d <- read.csv("e3_data.csv", sep=",", header=TRUE, stringsAsFactors=FALSE)
 df <- subset(d, subset=iso_3166==".")
 df$const.rd <- round(df$construct_budget_plan_total/1000000, 0)
-
 
 # Create graphics for awards using ggplot bar graphs
 g <- ggplot(df, aes(x = reorder(factor(regnum), awards),
@@ -34,7 +37,7 @@ pp <- g + coord_flip()+labs(x ="", title = "Total Awards", y = "(Award count)") 
 	axis.title.x = element_text(colour=dblueL, size=8),
 	plot.title = element_text(lineheight=.8, colour = dblueL))  
 	print(pp)
-  ggsave(pp, filename = paste("infra.awards", ".png"), width=7.5, height=5.5)
+  ggsave(pp, filename = paste("infra.awards", ".png"), width=7.5, height=5.5, dpi=dpi.out)
 
 # Create graphics for award amounts
 g <- ggplot(df, aes(x = reorder(factor(regnum), subawards),
@@ -47,7 +50,7 @@ pp <- g + coord_flip()+labs(x ="", title = "Total Sub-Awards", y = "(Sub-award c
 	axis.title.x = element_text(colour=dblueL, size=8),
 	plot.title = element_text(lineheight=.8, colour = dblueL))  
 	print(pp)
-  ggsave(pp, filename = paste("infra.subawards", ".png"), width=7.5, height=5.5)
+  ggsave(pp, filename = paste("infra.subawards", ".png"), width=7.5, height=5.5, dpi=dpi.out))
 
 # Create graphics for constructionaward amounts
 g <- ggplot(df, aes(x = reorder(factor(regnum), const.rd ),
@@ -60,7 +63,7 @@ pp <- g + coord_flip()+labs(x ="", title = "Total Construction Budget (in $USD M
 	axis.title.x = element_text(colour=dblueL, size=8),
 	plot.title = element_text(lineheight=.8, colour = dblueL)) + scale_y_continuous(labels = dollar)
 	print(pp)
-  ggsave(pp, filename = paste("infra.constbudget", ".png"), width=7.5, height=5.5)
+  ggsave(pp, filename = paste("infra.constbudget", ".png"), width=7.5, height=5.5, dpi=dpi.out))
 
 
 # Create graphics for award amounts
@@ -74,7 +77,7 @@ pp <- g + coord_flip()+labs(x ="", title = "Awards in Conflict Areas", y = "Conf
 	axis.title.x = element_text(colour=dblueL, size=8),
 	plot.title = element_text(lineheight=.8, colour = dblueL))
 	print(pp)
-  ggsave(pp, filename = paste("infra.conflict", ".png"), width=7.5, height=5.5)
+  ggsave(pp, filename = paste("infra.conflict", ".png"), width=7.5, height=5.5, dpi=dpi.out))
 
 
 # Stacked bar graphs (melt data first)
@@ -95,7 +98,7 @@ pp <- g + coord_flip()+labs(x ="", title = "Award Types", y = "Award type count"
 	axis.title.x = element_text(colour=dblueL, size=8),
 	plot.title = element_text(lineheight=.8, colour = dblueL))
 	print(pp)
-  ggsave(pp, filename = paste("award.type", ".png"), width=7.5, height=5.5)
+  ggsave(pp, filename = paste("award.type", ".png"), width=7.5, height=5.5, dpi=dpi.out))
 
 # Stacked bar graphs for remaining vars
 df.tmp <- df[c(1, 16:24)]
@@ -122,10 +125,11 @@ pp <- g + coord_flip()+labs(x ="", title = "Award Types", y = "Award type count"
 	axis.title.x = element_text(colour=dblueL, size=8),
 	plot.title = element_text(lineheight=.8, colour = dblueL))
 	print(pp)
-  ggsave(pp, filename = paste("detail.type", ".png"), width=7.5, height=5.5)
+  ggsave(pp, filename = paste("detail.type", ".png"), width=7.5, height=5.5, dpi=dpi.out)
 
 # Now create similar graphs for all countrys by region
-df.all <- subset(d, subset=iso_3166!=".")
+# Use dplyr functions to subset data
+df.all <- filter(d, iso_3166 != ".")
 df.all <- df.all[c(1, 4, 16:24)]
 
 names(df.all) <- c("Country", "Region", "Cooperative Agreement", "Direct Contract", "Fixed Amount Reimbursement", "G-2-G Agreements",
@@ -146,6 +150,56 @@ pp <- g + coord_flip()+labs(x ="", title = "Award Types", y = "Award type count"
         axis.title.x = element_text(colour=dblueL, size=8),
         plot.title = element_text(lineheight=.8, colour = dblueL))
 print(pp)
-ggsave(pp, filename = paste("detail.type.all", ".png"), width=7.5, height=5.5)
+ggsave(pp, filename = paste("detail.type.all", ".png"), width=15, height=9.5, dpi=dpi.out)
 
+# Create a total count of grants by infra type (similar as above award.type.all)
+df.all <- filter(d, iso_3166 != ".")
+df.all <- select(df.all, regnum, reg_bureau, buildingacts:otheracts)
 
+# Rename data & reshape
+names(df.all) <- c("Country", "Region", "buildings", "water", "tranport", "energy", "other")
+df.melt <- melt(df.all, id.var = c("Country", "Region"), na.rm = TRUE)
+
+# Mutate data by creating a new sum of all projects by country/region
+df.sub <- df.melt %>% group_by(Country, Region) %>% mutate(sum = sum(value))
+
+# Create a combined graphic
+g <- ggplot(df.sub, aes(x = reorder(factor(Country), sum),
+                        y = value, fill = variable)) + geom_bar(stat = "identity")
+pp <- g + coord_flip()+labs(x ="", title = "Award Types", y = "Award type count") +scale_fill_brewer(palette="RdYlGn") +
+  theme(legend.position = "top", legend.title=element_blank(),
+        panel.background=element_rect(fill="white"), axis.ticks.y=element_blank(),
+        axis.text.y  = element_text(hjust=1, size=10, colour = dblueL), axis.ticks.x=element_blank(),
+        axis.text.x  = element_text(hjust=1, size=10, colour = dblueL),
+        axis.title.x = element_text(colour=dblueL, size=8),
+        plot.title = element_text(lineheight=.8, colour = dblueL))
+print(pp)
+ggsave(pp, filename = paste("award.type.all", ".png"), width=11, height=9.5, dpi=dpi.out)
+
+# Create similar graphs but by region using a function
+# x = created by filtering the data by region
+# y = input parameter, should be a string equal to regional name
+# z = input paramenter, the name of the graph output
+
+regPlot <- function(y, z) {
+	x <- filter(df.sub, Region == y)
+	g <- ggplot(x, aes(x = reorder(factor(Country), sum),
+                        y = value, fill = variable)) + geom_bar(stat = "identity")
+	pp <- g + coord_flip()+labs(x ="", title = paste("Award Types for", y), y = "Award type count")+ 
+		scale_fill_brewer(palette="RdYlGn") +
+  		theme(legend.position = "top", legend.title=element_blank(),
+       	panel.background=element_rect(fill="white"), axis.ticks.y=element_blank(),
+       	axis.text.y  = element_text(hjust=1, size=10, colour = dblueL), axis.ticks.x=element_blank(),
+       	axis.text.x  = element_text(hjust=1, size=10, colour = dblueL),
+       	axis.title.x = element_text(colour=dblueL, size=8),
+        	plot.title = element_text(lineheight=.8, colour = dblueL))
+	print(pp)
+	ggsave(pp, filename = paste(z, ".png"), width=7.5, height=5.5, dpi=dpi.out)
+}
+
+regPlot("Afghanistan and Pakistan", "OAPA.types")
+regPlot("Africa", "Africa.types")
+regPlot("Asia", "Asia.types")
+regPlot("Europe and Eurasia", "EE.types")
+regPlot("Latin America and the Carribean", "LAC.types")
+regPlot("Middle East", "ME.types")
