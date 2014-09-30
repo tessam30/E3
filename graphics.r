@@ -1,7 +1,7 @@
 remove(list = ls())
 
 # Check if the required libraries exist, if not install them 
-required_lib =c("ggplot2","foreign","dplyr")
+required_lib =c("ggplot2","foreign","dplyr", "scales", "reshape2")
 
 # Load required libraries
 lapply(required_lib, require, character.only=T)
@@ -15,7 +15,8 @@ dblueL 	<- c("#003359")
 lgrayL	<- c("#CECFCB")
 
 # Set working directory & load data
-setwd("U:/E3/Infra/")
+# setwd("U:/E3/Infra/")
+setwd("C:/Users/t/Documents/GitHub/E3/Datain")
 
 d <- read.csv("e3_data.csv", sep=",", header=TRUE, stringsAsFactors=FALSE)
 df <- subset(d, subset=iso_3166==".")
@@ -83,9 +84,10 @@ df.melt <- melt(df.tmp, id.var = "Country")
 names(df.melt) <- c("Country", "Type", "value")
 
 
+# TODO: Figure out correct color scheme to use
 g <- ggplot(df.melt, aes(x = reorder(factor(Country), value),
 		y = value, fill = Type)) + geom_bar(stat = "identity")
-pp <- g + coord_flip()+labs(x ="", title = "Award Types", y = "Award type count") +scale_fill_brewer(palette="Reds") +
+pp <- g + coord_flip()+labs(x ="", title = "Award Types", y = "Award type count") +scale_fill_brewer(palette="RdYlGn") +
 	theme(legend.position = "top", legend.title=element_blank(),
 	 panel.background=element_rect(fill="white"), axis.ticks.y=element_blank(),
 	axis.text.y  = element_text(hjust=1, size=10, colour = dblueL), axis.ticks.x=element_blank(),
@@ -97,13 +99,18 @@ pp <- g + coord_flip()+labs(x ="", title = "Award Types", y = "Award type count"
 
 # Stacked bar graphs for remaining vars
 df.tmp <- df[c(1, 16:24)]
-df.tmp$sum <- rowSums(df.tmp[2:13], na.rm = FALSE, dims = 1)
+#df.tmp$sum <- rowSums(df.tmp[2:10], na.rm = TRUE, dims = 1)
 names(df.tmp) <- c("Country", "Cooperative Agreement", "Direct Contract", "Fixed Amount Reimbursement", "G-2-G Agreements",
-	"Grants", "Host Country Awards", "Other", "PIO Grants", "USG Interagency Agreements")
+	"Grants", "Host Country Awards", "Other", "PIO Grants", "USG Interagency Agreements")#, "Total")
 
-df.melt <- melt(df.tmp, id.var = "Country")
+df.tmp$Country <- reorder(df.tmp$Country, rowSums(df.tmp[-1]) )
 
-g <- ggplot(df.melt, aes(x = reorder(factor(Country), -value),
+df.melt <- melt(df.tmp, id.var = "Country", na.rm = TRUE)
+#df.melt$Country <- as.factor(df.melt$Country)
+
+df.sub <- df.melt %>% group_by(Country) %>% mutate(sum = sum(value))
+
+g <- ggplot(df.melt, aes(x = Country,
 		y = value, fill = variable)) + geom_bar(stat = "identity")
 pp <- g + coord_flip()+labs(x ="", title = "Award Types", y = "Award type count") +scale_fill_brewer(palette="Reds") +
 	theme(legend.position = "top", legend.title=element_blank(),
@@ -115,4 +122,5 @@ pp <- g + coord_flip()+labs(x ="", title = "Award Types", y = "Award type count"
 	print(pp)
   ggsave(pp, filename = paste("award.type", ".png"), width=7.5, height=5.5)
 
+# g <- ggplot(df.melt, aes(x = reorder(factor(Country), value),
 df.tmp <- df[c(1, 16:24)]
