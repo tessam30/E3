@@ -19,7 +19,7 @@ dpi.out = 500
 clr = "YlOrRd"
 
 # Set working directory & load data
-locwd <- c("U:/E3/Infra/") , "P:/GeoCenter/GIS/Projects/E3/InfrastructureReport/R")
+locwd <- c("U:/E3/Infra/")
 homewd <- c("C:/Users/t/Documents/GitHub/E3/Datain")
 pdrwd <- c("P:/GeoCenter/GIS/Projects/E3/InfrastructureReport/R")
 setwd(locwd)
